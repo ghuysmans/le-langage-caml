@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "sys";;
+open Sys;;
 exception Erreur;;
 
 let traite_fichier traitement nom_entrée nom_sortie =
@@ -38,31 +38,31 @@ let traite_fichier traitement nom_entrée nom_sortie =
                    ^ nom_entrée ^ " : " ^ message);
     raise Erreur;;
 let compresse_fichier nom_fichier =
-  traite_fichier huffman__compresse
+  traite_fichier Huffman.compresse
                  nom_fichier (nom_fichier ^ ".cpr");;
 
 let décompresse_fichier nom_fichier =
-  let longueur = string_length nom_fichier in
+  let longueur = String.length nom_fichier in
   if longueur < 4
-  or sub_string nom_fichier (longueur - 4) 4 <> ".cpr" then
+  or String.sub nom_fichier (longueur - 4) 4 <> ".cpr" then
     let nom_entrée = nom_fichier ^ ".cpr"
     and nom_sortie = nom_fichier in
-    traite_fichier huffman__décompresse nom_entrée nom_sortie
+    traite_fichier Huffman.décompresse nom_entrée nom_sortie
   else
     let nom_entrée = nom_fichier
-    and nom_sortie = sub_string nom_fichier 0 (longueur - 4) in
-    traite_fichier huffman__décompresse nom_entrée nom_sortie;;
-if sys__interactive then () else
+    and nom_sortie = String.sub nom_fichier 0 (longueur - 4) in
+    traite_fichier Huffman.décompresse nom_entrée nom_sortie;;
+if Caml__csl.interactive then () else
   begin
     let erreur = ref false in
-    if vect_length command_line >= 2 & command_line.(1) = "-d" then
-      for i = 2 to vect_length command_line - 1 do
-        try décompresse_fichier command_line.(i)
+    if Array.length argv >= 2 & argv.(1) = "-d" then
+      for i = 2 to Array.length argv - 1 do
+        try décompresse_fichier argv.(i)
         with Erreur -> erreur := true
       done
     else
-      for i = 1 to vect_length command_line - 1 do
-        try compresse_fichier command_line.(i)
+      for i = 1 to Array.length argv - 1 do
+        try compresse_fichier argv.(i)
         with Erreur -> erreur := true
       done;
     exit (if !erreur then 2 else 0)

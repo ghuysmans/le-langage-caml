@@ -14,6 +14,7 @@
 (***********************************************************************)
 type 'a t = Vide | File of int * 'a * 'a t * 'a t;;
 let vide = Vide;;
+exception File_vide;;
 let rec enlève_sommet = function
   | Vide -> raise File_vide
   | File(prio, elt, Vide, Vide) -> Vide

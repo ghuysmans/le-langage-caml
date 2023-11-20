@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value initialise : unit -> unit
-  and écrire_bit : out_channel -> int -> unit
-  and lire_bit : in_channel -> int
-  and finir : out_channel -> unit;;
+val initialise : unit -> unit
+  val écrire_bit : out_channel -> int -> unit
+  val lire_bit : in_channel -> int
+  val finir : out_channel -> unit;;
