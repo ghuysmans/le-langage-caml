@@ -1,0 +1,1 @@
+(executable (name docteur) (libraries csl) (flags (:standard -w -3 -unsafe-string)))
