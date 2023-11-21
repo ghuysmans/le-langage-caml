@@ -12,6 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
+open Lib;;
 open Code;;
 open Simul;;
 

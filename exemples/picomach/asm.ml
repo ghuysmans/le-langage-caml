@@ -12,6 +12,8 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
+open Lib;;
+
 let assemble_fichier nom_entrée nom_sortie =
     let entrée = open_in nom_entrée in
     let sortie = open_out_bin nom_sortie in

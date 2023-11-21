@@ -1,5 +1,4 @@
-(executable
- (name exec)
- (libraries csl)
- (flags (:standard -w -3-26-32-39-52 -unsafe-string))
- (preprocess (action (run camlp4o %{input-file}))))
+(executables
+ (names asm exec)
+ (libraries csl lib)
+ (flags (:standard -w -3)))
