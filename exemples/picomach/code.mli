@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-type registre == int;;
+type registre = int;;
 
 type opérande =
      Reg of registre
@@ -31,7 +31,7 @@ and opération =
   | And | Or | Xor | Shl | Shr
   | Slt | Sle | Seq;;
 
-value nombre_de_registres: int
-  and sp: int
-  and ra: int
-  and taille_du_mot: int;;
+val nombre_de_registres: int
+  val sp: int
+  val ra: int
+  val taille_du_mot: int;;

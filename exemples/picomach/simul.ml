@@ -15,17 +15,19 @@
 
 (* $Id: simul.ml,v 1.3 2015/03/27 19:26:08 weis Exp $ *)
 
-#open "code";;
+open Code;;
+
+exception Erreur of string * int;;
 
 type état_du_processeur =
-   { registres: int vect;
+   { registres: int array;
      mutable pc: int;
-     mutable code: instruction vect;
-     mutable mémoire: int vect }
+     mutable code: instruction array;
+     mutable mémoire: int array }
 ;;
 
 let pico =
-  { registres = make_vect nombre_de_registres 0;
+  { registres = Array.create nombre_de_registres 0;
     pc = 0;
     code = [| |];
     mémoire = [| |] }
@@ -44,7 +46,7 @@ let écrire_registre reg valeur =
 
 let lire_instruction adresse =
   let adr = adresse/taille_du_mot in
-  if adr < 0 or adr >= vect_length pico.code then
+  if adr < 0 or adr >= Array.length pico.code then
     raise (Erreur ("sortie de la zone code", adr));
   if adresse mod taille_du_mot <> 0 then
     raise (Erreur ("pc non aligné", adresse));
@@ -53,7 +55,7 @@ let lire_instruction adresse =
 
 let lire_mémoire adresse =
   let adr = adresse/taille_du_mot in
-  if adr < 0 or adr >= vect_length pico.mémoire then
+  if adr < 0 or adr >= Array.length pico.mémoire then
     raise (Erreur ("lecture en dehors de la mémoire", adresse));
   if adresse mod taille_du_mot <> 0 then
     raise (Erreur ("lecture non alignée", adresse));
@@ -62,7 +64,7 @@ let lire_mémoire adresse =
 
 let écrire_mémoire adresse valeur =
   let adr = adresse/taille_du_mot in
-  if adr < 0 or adr >= vect_length pico.mémoire then
+  if adr < 0 or adr >= Array.length pico.mémoire then
     raise (Erreur ("écriture en dehors de la mémoire", adresse));
   if adresse mod taille_du_mot <> 0 then
     raise (Erreur ("écriture non alignée", adresse));
@@ -74,11 +76,11 @@ let valeur_opérande = function
 ;;
 
 let tableau_des_appels_système =
-  make_vect 10 ((function x -> x) : int -> int)
+  Array.create 10 ((function x -> x) : int -> int)
 ;;
 
 let exécute_appel_système appel argument =
-  if appel < 0 or appel >= vect_length tableau_des_appels_système
+  if appel < 0 or appel >= Array.length tableau_des_appels_système
    then raise(Erreur("mauvais appel système", appel))
    else tableau_des_appels_système.(appel) argument
 ;;
@@ -127,7 +129,7 @@ let cycle_d'horloge () =
 let exécute programme taille_mémoire_en_octets =
   let taille_mémoire_en_mots = (taille_mémoire_en_octets + 3) / 4 in
   pico.code <- programme;
-  pico.mémoire <- make_vect taille_mémoire_en_mots 0;
+  pico.mémoire <- Array.create taille_mémoire_en_mots 0;
   pico.registres.(0) <- 0;
   pico.registres.(sp) <- taille_mémoire_en_mots * taille_du_mot;
   pico.pc <- 0;
@@ -136,7 +138,7 @@ let exécute programme taille_mémoire_en_octets =
 ;;
 
 let appel_système_read _ =
-  print_string "? "; flush std_out;
+  print_string "? "; flush stdout;
   try read_int()
   with Failure _ -> raise (Erreur ("erreur de lecture", 1))
 

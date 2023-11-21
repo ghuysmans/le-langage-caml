@@ -12,100 +12,79 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-
-(* $Id: lexuniv.ml,v 1.3 2015/03/27 19:26:08 weis Exp $ *)
+type lexème =
+     MC of string
+   | Ident of string
+   | Entier of int;;
 
 let rec lire_entier accumulateur flux =
-  match flux with
-  | [< '(`0`..`9` as c) >] ->
-      lire_entier (10 * accumulateur + int_of_char c - 48) flux
+  match flux with parser
+  | [< c = Caml__csl.within ['0','9'] "" >] ->
+      lire_entier (10 * accumulateur + Char.code c - 48) flux
   | [< >] ->
-      accumulateur
-;;
+      accumulateur;;
 
 let tampon = "----------------";;
 
 let rec lire_mot position flux =
-  match flux with
-  | [< '(`A`..`Z` | `a`..`z` | `0`..`9` | `_` | `'` |
-         `é`|`à`|`è`|`ù`|`â`|`ê`|`î`|`ô`|`û`|`ë`|`ï`|`ü`|`ç`|
-         `É`|`À`|`È`|`Ù`|`Â`|`Ê`|`Î`|`Ô`|`Û`|`À`|`Ï`|`Ü`|`Ç`
-         as c) >] ->
-      if position < string_length tampon then
-        set_nth_char tampon position c;
+  match flux with parser
+  | [< c = Caml__csl.within ['A','Z'; 'a','z'; '0','9'] "_'éàèùâêîôûëïüçÉÀÈÙÂÊÎÔÛÀÏÜÇ" >] ->
+      if position < String.length tampon then
+        String.set tampon position c;
       lire_mot (position+1) flux
   | [< >] ->
-      sub_string tampon 0 (min position (string_length tampon))
-;;
+      String.sub tampon 0 (min position (String.length tampon));;
 let rec lire_symbole position flux =
-  match flux with
-  | [< '(`!`|`$`|`%`|`&`|`*`|`+`|`-`|`.`|`/`|`:`|
-         `;`|`<`|`=`|`>`|`?`|`@`|`^`|`|`|`~` as c) >] ->
-      if position < string_length tampon then
-        set_nth_char tampon position c;
+  match flux with parser
+  | [< c = Caml__csl.within [] "!$%&*+-./:;<=>?@^|~" >] ->
+      if position < String.length tampon then
+        String.set tampon position c;
       lire_symbole (position + 1) flux
   | [< >] ->
-      sub_string tampon 0 (min position (string_length tampon))
-;;
-
+      String.sub tampon 0 (min position (String.length tampon));;
 let rec lire_commentaire flux =
-  match flux with
-  | [< '`\n` >] -> ()
-  | [< 'c >] -> lire_commentaire flux
-;;
-
+  match flux with parser
+  | [< ''\n' >] -> ()
+  | [< '_ >] -> lire_commentaire flux;;
 let mc_ou_ident table_des_mots_clés ident =
-    try hashtbl__find table_des_mots_clés ident
-    with Not_found -> Ident(ident)
-;;
-
+    try Hashtbl.find table_des_mots_clés ident
+    with Not_found -> Ident(ident);;
 let mc_ou_erreur table_des_mots_clés caractère =
-    let ident = make_string 1 caractère in
-    try hashtbl__find table_des_mots_clés ident
-    with Not_found -> raise Parse_error
-;;
-
+    let ident = String.make 1 caractère in
+    try Hashtbl.find table_des_mots_clés ident
+    with Not_found -> raise (Stream.Error "");;
 let rec lire_lexème table flux =
-  match flux with
-  | [< '(` `|`\n`|`\r`|`\t`) >] ->
+  match flux with parser
+  | [< _ = Caml__csl.within [] " \n\r\t" >] ->
       lire_lexème table flux
-  | [< '`#` >] ->
+  | [< ''#' >] ->
       lire_commentaire flux; lire_lexème table flux
-  | [< '(`A`..`Z` | `a`..`z` |
-         `é`|`à`|`è`|`ù`|`â`|`ê`|`î`|`ô`|`û`|`ë`|`ï`|`ü`|`ç`|
-         `É`|`À`|`È`|`Ù`|`Â`|`Ê`|`Î`|`Ô`|`Û`|`Ë`|`Ï`|`Ü`|`Ç`
-         as c) >] ->
-      set_nth_char tampon 0 c;
+  | [< c = Caml__csl.within ['A','Z'; 'a','z'] "éàèùâêîôûëïüçÉÀÈÙÂÊÎÔÛÀÏÜÇ" >] ->
+      String.set tampon 0 c;
       mc_ou_ident table (lire_mot 1 flux)
-  | [< '(`!`|`$`|`%`|`&`|`*`|`+`|`.`|`/`|`:`|`;`|
-         `<`|`=`|`>`|`?`|`@`|`^`|`|`|`~` as c) >] ->
-      set_nth_char tampon 0 c;
+  | [< c = Caml__csl.within [] "!$%&*+-./:;<=>?@^|~" >] ->
+      String.set tampon 0 c;
       mc_ou_ident table (lire_symbole 1 flux)
-  | [< '(`0`..`9` as c) >] ->
-      Entier(lire_entier (int_of_char c - 48) flux)
-  | [< '`-` >] ->
-      begin match flux with
-      | [< '(`0`..`9` as c) >] ->
-          Entier(- (lire_entier  (int_of_char c - 48) flux))
+  | [< c = Caml__csl.within ['0','9'] "" >] ->
+      Entier(lire_entier (Char.code c - 48) flux)
+  | [< ''-' >] ->
+      begin match flux with parser
+      | [< c = Caml__csl.within ['0','9'] "" >] ->
+          Entier(- (lire_entier  (Char.code c - 48) flux))
       | [< >] ->
-          set_nth_char tampon 0 `-`;
+          String.set tampon 0 '-';
           mc_ou_ident table (lire_symbole 1 flux)
       end
   | [< 'c >] ->
-      mc_ou_erreur table c
-;;
-
-let rec analyseur table flux =
-  stream_from (function () ->
-    match flux with
-    | [< (lire_lexème table) lexème >] -> lexème
-    | [< >] -> raise Parse_failure)
-;;
-
+      mc_ou_erreur table c;;
+let analyseur table flux =
+    Caml__csl.from (function () -> 
+      match flux with parser
+      | [< lexème = (lire_lexème table) >] -> lexème
+      | [< >] -> raise Stream.Failure);;
 let construire_analyseur mots_clés =
-  let table_des_mots_clés = hashtbl__new 17 in
-  do_list
-    (function mot -> hashtbl__add table_des_mots_clés mot (MC mot))
-    mots_clés;
-  analyseur table_des_mots_clés
-;;
+    let table_des_mots_clés = Hashtbl.create 17 in
+    List.iter
+      (function mot -> Hashtbl.add table_des_mots_clés mot (MC mot))
+      mots_clés;
+    analyseur table_des_mots_clés;;

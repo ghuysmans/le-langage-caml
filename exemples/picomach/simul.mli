@@ -12,14 +12,14 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "code";;
+open Code;;
 
 exception Erreur of string * int;;
 
-value lire_mémoire : int -> int;;
-value écrire_mémoire : int -> int -> unit;;
-value lire_registre : int -> int;;
-value écrire_registre : int -> int -> unit;;
-value tableau_des_appels_système: (int -> int) vect;;
+val lire_mémoire : int -> int;;
+val écrire_mémoire : int -> int -> unit;;
+val lire_registre : int -> int;;
+val écrire_registre : int -> int -> unit;;
+val tableau_des_appels_système: (int -> int) array;;
 
-value exécute: instruction vect -> int -> unit;;
+val exécute: instruction array -> int -> unit;;

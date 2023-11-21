@@ -12,5 +12,5 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "code";;
-value programme: char stream -> instruction vect;;
+open Code;;
+val programme: char Stream.t -> instruction array;;

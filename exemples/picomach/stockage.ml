@@ -15,33 +15,35 @@
 
 (* $Id: stockage.ml,v 1.3 2015/03/27 19:26:08 weis Exp $ *)
 
-#open "code";;
+open Code;;
+
+exception Erreur of string;;
 
 type état_de_l'assembleur =
    { mutable pc: int;
-     mutable code: instruction vect;
-     mutable table_étiq: (string, int) hashtbl__t;
+     mutable code: instruction array;
+     mutable table_étiq: (string, int) Hashtbl.t;
      mutable à_résoudre: (int * string) list }
 ;;
 
 let asm =
-  { pc = 0; code = [||]; table_étiq = hashtbl__new 0;
+  { pc = 0; code = [||]; table_étiq = Hashtbl.create 0;
     à_résoudre = [] }
 ;;
 
 let initialise () =
   asm.pc <- 0;
-  asm.code <- make_vect 100 Stop;
-  asm.table_étiq <- hashtbl__new 17;
+  asm.code <- Array.create 100 Stop;
+  asm.table_étiq <- Hashtbl.create 17;
   asm.à_résoudre <- []
 ;;
 
 let décode_adresse adr = adr / taille_du_mot;;
 
 let assemble instruction =
-  if asm.pc >= vect_length asm.code then begin
-    let nouveau_code = make_vect (2 * vect_length asm.code) Stop in
-    blit_vect asm.code 0 nouveau_code 0 (vect_length asm.code);
+  if asm.pc >= Array.length asm.code then begin
+    let nouveau_code = Array.create (2 * Array.length asm.code) Stop in
+    Array.blit asm.code 0 nouveau_code 0 (Array.length asm.code);
     asm.code <- nouveau_code
   end;
   asm.code.(décode_adresse asm.pc) <- instruction;
@@ -50,10 +52,10 @@ let assemble instruction =
 
 let définir_étiquette nom_étiq val_étiq =
   try
-    let déjà_définie = hashtbl__find asm.table_étiq nom_étiq in
+    let déjà_définie = Hashtbl.find asm.table_étiq nom_étiq in
     raise (Erreur ("étiquette " ^ nom_étiq ^ " redéfinie"))
   with Not_found ->
-    hashtbl__add asm.table_étiq nom_étiq val_étiq;;
+    Hashtbl.add asm.table_étiq nom_étiq val_étiq;;
 
 let poser_étiquette nom_étiq =
   définir_étiquette nom_étiq asm.pc
@@ -61,7 +63,7 @@ let poser_étiquette nom_étiq =
 
 let valeur_étiquette nom_étiq =
   try
-     hashtbl__find asm.table_étiq nom_étiq
+     Hashtbl.find asm.table_étiq nom_étiq
   with Not_found ->
      asm.à_résoudre <- (asm.pc, nom_étiq) :: asm.à_résoudre;
      0
@@ -70,7 +72,7 @@ let valeur_étiquette nom_étiq =
 let résoudre_étiquette (adresse, nom_étiq) =
   let valeur =
       try
-        hashtbl__find asm.table_étiq nom_étiq
+        Hashtbl.find asm.table_étiq nom_étiq
       with Not_found ->
         raise (Erreur ("étiquette " ^ nom_étiq ^ " indéfinie")) in
   let nouvelle_instruction =
@@ -88,6 +90,6 @@ let résoudre_étiquette (adresse, nom_étiq) =
 ;;
 
 let extraire_code () =
-  do_list résoudre_étiquette asm.à_résoudre;
-  sub_vect asm.code 0 (décode_adresse asm.pc)
+  List.iter résoudre_étiquette asm.à_résoudre;
+  Array.sub asm.code 0 (décode_adresse asm.pc)
 ;;
