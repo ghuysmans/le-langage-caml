@@ -12,8 +12,8 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "prop";;
-#open "asynt";;
+open Prop;;
+open Asynt;;
 
 let examine chaîne =
     let proposition = analyse_proposition chaîne in
@@ -27,14 +27,14 @@ let examine chaîne =
           print_string ("Théorème: pour toute proposition "^var^", ")
       | _ ->
           print_string "Théorème: pour toutes propositions ";
-          do_list (function var -> print_string (var^", ")) variables
+          List.iter (function var -> print_string (var^", ")) variables
       end;
       print_string chaîne;
       print_newline()
     with Réfutation liaisons ->
       print_string (chaîne ^ " n'est pas un théorème,\n");
       print_string "car la proposition est fausse quand\n";
-      do_list
+      List.iter
        (function (var, b) ->
          print_string (var ^ " est ");
          print_string (if b then "vraie" else "fausse");
@@ -47,4 +47,4 @@ let boucle () =
     done
   with End_of_file -> ();;
 
-if sys__interactive then () else begin boucle(); exit 0 end;;
+if Caml__csl.interactive then () else begin boucle(); exit 0 end;;

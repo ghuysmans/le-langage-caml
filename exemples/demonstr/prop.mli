@@ -23,5 +23,5 @@ type proposition =
    | Variable of string;;
 
 exception Réfutation of (string * bool) list;;
-value vérifie_tautologie: proposition -> string list -> unit
-  and variables_libres: proposition -> string list;;
+val vérifie_tautologie: proposition -> string list -> unit
+  val variables_libres: proposition -> string list;;

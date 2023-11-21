@@ -12,5 +12,5 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "prop";;
-value analyse_proposition: string -> proposition;;
+open Prop;;
+val analyse_proposition: string -> proposition;;
