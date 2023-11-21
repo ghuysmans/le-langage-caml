@@ -12,7 +12,51 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "lexuniv";;
+open Lexuniv;;
+
+type constante =
+    Entière of int
+  | Booléenne of bool;;
+
+type expr_type =
+    Integer                          (* le type des entiers *)
+  | Boolean                          (* le type des booléens *)
+  | Array of int * int * expr_type;; (* le type des tableaux *)
+                         (* (les deux "int" sont les bornes) *)
+type expression =
+    Constante of constante
+  | Variable of string
+  | Application of string * expression list
+  | Op_unaire of string * expression
+  | Op_binaire of string * expression * expression
+  | Accès_tableau of expression * expression;;
+
+type instruction =
+    Affectation_var of string * expression
+  | Affectation_tableau of expression * expression * expression
+  | Appel of string * expression list   (* appel de procédure *)
+  | If of expression * instruction * instruction
+  | While of expression * instruction
+  | Write of expression
+  | Read of string
+  | Bloc of instruction list;;          (* bloc begin ... end *)
+
+type décl_proc =
+  { proc_paramètres: (string * expr_type) list;
+    proc_variables: (string * expr_type) list;
+    proc_corps: instruction }
+and décl_fonc =
+  { fonc_paramètres: (string * expr_type) list;
+    fonc_type_résultat: expr_type;
+    fonc_variables: (string * expr_type) list;
+    fonc_corps: instruction };;
+
+type programme =
+  { prog_variables: (string * expr_type) list;
+    prog_procédures: (string * décl_proc) list;
+    prog_fonctions: (string * décl_fonc) list;
+    prog_corps: instruction };;
+
 let analyseur_lexical = construire_analyseur
   ["false";"true";"("; ","; ")"; "["; "]"; "not"; "*"; "/"; "-"; "+";
    "="; "<>"; "<"; ">"; "<="; ">="; "and"; "or"; "if"; "then"; "else";
@@ -20,54 +64,54 @@ let analyseur_lexical = construire_analyseur
    "integer"; "boolean"; "array"; "of"; ".."; "var"; ":";
    "procedure"; "function"; "program"];;
 let lire_liste lire_élément séparateur =
-  let rec lire_reste = function
-    | [< (stream_check
-           (function lexème -> lexème = MC séparateur)) sép;
-         lire_élément elt;
-         lire_reste reste >] -> elt :: reste
+  let rec lire_reste = parser
+    | [< sép = (Caml__csl.check
+           (function lexème -> lexème = MC séparateur));
+         elt = lire_élément;
+         reste = lire_reste >] -> elt :: reste
     | [< >] -> [] in
-  function
-  | [< lire_élément elt; lire_reste reste >] -> elt :: reste
+  parser
+  | [< elt = lire_élément; reste = lire_reste >] -> elt :: reste
   | [< >] -> [];;
 
 let est_un_opérateur opérateurs = function
-  | MC op -> mem op opérateurs
+  | MC op -> List.mem op opérateurs
   | _     -> false;;
   
-let lire_opérateur opérateurs = function
-  [< (stream_check (est_un_opérateur opérateurs)) (MC op) >] -> op;;
+let lire_opérateur opérateurs = parser
+  [< (MC op) = (Caml__csl.check (est_un_opérateur opérateurs)) >] -> op;;
 
 let lire_opération lire_base opérateurs =
-  let rec lire_reste e1 = function
-  | [< (lire_opérateur opérateurs) op;
-       lire_base e2;
-       (lire_reste (Op_binaire(op, e1, e2))) e >] -> e
+  let rec lire_reste e1 = parser
+  | [< op = (lire_opérateur opérateurs);
+       e2 = lire_base;
+       e = (lire_reste (Op_binaire(op, e1, e2))) >] -> e
   | [< >] -> e1 in
- function [< lire_base e1; (lire_reste e1) e >] -> e;;
+ parser [< e1 = lire_base; e = (lire_reste e1) >] -> e;;
 let rec lire_expr0 flux =
-  match flux with
+  match flux with parser
   | [< 'Entier n >] -> Constante(Entière n)
   | [< 'MC "false" >] -> Constante(Booléenne false)
   | [< 'MC "true" >] -> Constante(Booléenne true)
   | [< 'Ident nom >] ->
-      begin match flux with
-      | [< 'MC "("; (lire_liste lire_expr ",") el; 'MC ")">] ->
+      begin match flux with parser
+      | [< 'MC "("; el = (lire_liste lire_expr ","); 'MC ")">] ->
                  Application(nom, el)
       | [< >] -> Variable nom
       end
-  | [< 'MC "("; lire_expr e; 'MC ")" >] -> e
+  | [< 'MC "("; e = lire_expr; 'MC ")" >] -> e
 
 and lire_expr1 flux =
-  match flux with
-  | [< lire_expr0 e1 >] ->
-      match flux with
-      | [< 'MC "["; lire_expr e2; 'MC "]" >] -> Accès_tableau(e1,e2)
+  match flux with parser
+  | [< e1 = lire_expr0 >] ->
+      match flux with parser
+      | [< 'MC "["; e2 = lire_expr; 'MC "]" >] -> Accès_tableau(e1,e2)
       | [< >] -> e1
 
-and lire_expr2 = function
-  | [< 'MC "-"; lire_expr1 e >] -> Op_unaire("-", e)
-  | [< 'MC "not"; lire_expr1 e >] -> Op_unaire("not", e)
-  | [< lire_expr1 e >] -> e
+and lire_expr2 = parser
+  | [< 'MC "-"; e = lire_expr1 >] -> Op_unaire("-", e)
+  | [< 'MC "not"; e = lire_expr1 >] -> Op_unaire("not", e)
+  | [< e = lire_expr1 >] -> e
 
 and lire_expr3 flux = 
   lire_opération lire_expr2 ["*"; "/"] flux
@@ -80,77 +124,77 @@ and lire_expr6 flux =
 and lire_expr flux = 
   lire_opération lire_expr6 ["or"] flux;;
 let rec lire_instr flux =
-  match flux with
-  | [< 'MC "if"; lire_expr e1; 'MC "then"; lire_instr i2 >] ->
-      begin match flux with
-      | [< 'MC "else"; lire_instr i3 >] -> If(e1, i2, i3)
+  match flux with parser
+  | [< 'MC "if"; e1 = lire_expr; 'MC "then"; i2 = lire_instr >] ->
+      begin match flux with parser
+      | [< 'MC "else"; i3 = lire_instr >] -> If(e1, i2, i3)
       | [< >] -> If(e1, i2, Bloc [])
       end
-  | [< 'MC "while"; lire_expr e1; 'MC "do"; lire_instr i2 >] ->
+  | [< 'MC "while"; e1 = lire_expr; 'MC "do"; i2 = lire_instr >] ->
       While(e1, i2)
-  | [< 'MC "write"; 'MC "("; lire_expr e; 'MC ")" >] ->
+  | [< 'MC "write"; 'MC "("; e = lire_expr; 'MC ")" >] ->
       Write e
   | [< 'MC "read"; 'MC "("; 'Ident nom; 'MC ")" >] ->
       Read nom
-  | [< 'MC "begin"; (lire_liste lire_instr ";") il; 'MC "end" >] ->
+  | [< 'MC "begin"; il = (lire_liste lire_instr ";"); 'MC "end" >] ->
       Bloc il
-  | [< lire_expr e >] ->
+  | [< e = lire_expr >] ->
       match e with
       | Application(nom, el) ->
           Appel(nom, el)
       | Variable nom ->
-          begin match flux with
-          | [< 'MC ":="; lire_expr e >] ->
+          begin match flux with parser
+          | [< 'MC ":="; e = lire_expr >] ->
               Affectation_var(nom, e)
           end
       | Accès_tableau(e1, e2) ->
-          begin match flux with
-            [< 'MC ":="; lire_expr e3 >] ->
+          begin match flux with parser
+            [< 'MC ":="; e3 = lire_expr >] ->
               Affectation_tableau(e1, e2, e3)
           end
-      | _ -> raise Parse_error;;
+      | _ -> raise (Stream.Error "");;
 
-let rec lire_type = function
+let rec lire_type = parser
   | [< 'MC "integer" >] -> Integer
   | [< 'MC "boolean" >] -> Boolean
   | [< 'MC "array"; 'MC "["; 'Entier bas; 'MC ".."; 'Entier haut;
-       'MC "]"; 'MC "of"; lire_type ty >] -> Array(bas, haut, ty);;
+       'MC "]"; 'MC "of"; ty = lire_type >] -> Array(bas, haut, ty);;
 
-let rec lire_variables = function
-  | [< 'MC "var"; 'Ident nom; 'MC ":"; lire_type ty; 'MC ";";
-       lire_variables reste >] -> (nom,ty)::reste
+let rec lire_variables = parser
+  | [< 'MC "var"; 'Ident nom; 'MC ":"; ty = lire_type; 'MC ";";
+       reste = lire_variables >] -> (nom,ty)::reste
   | [< >] -> [];;
 
-let lire_un_paramètre = function
-    [< 'Ident nom; 'MC ":"; lire_type ty >] -> (nom,ty);;
+let lire_un_paramètre = parser
+    [< 'Ident nom; 'MC ":"; ty = lire_type >] -> (nom,ty);;
 
-let lire_paramètres = function
+let lire_paramètres = parser
     [< 'MC "(";
-       (lire_liste lire_un_paramètre ",") paramètres;
+       paramètres = (lire_liste lire_un_paramètre ",");
        'MC ")" >] -> paramètres;;
 
-let lire_procédure = function
-  [< 'MC "procedure"; 'Ident nom; lire_paramètres p; 'MC ";";
-     lire_variables v; lire_instr i; 'MC ";" >] ->
+let lire_procédure = parser
+  [< 'MC "procedure"; 'Ident nom; p = lire_paramètres; 'MC ";";
+     v = lire_variables; i = lire_instr; 'MC ";" >] ->
        (nom, {proc_paramètres=p; proc_variables=v; proc_corps=i});;
 
-let lire_fonction = function
-  [< 'MC "function"; 'Ident nom; lire_paramètres p; 'MC ":";
-     lire_type ty; 'MC ";"; lire_variables v;
-     lire_instr i; 'MC ";" >] ->
+let lire_fonction = parser
+  [< 'MC "function"; 'Ident nom; p = lire_paramètres; 'MC ":";
+     ty = lire_type; 'MC ";"; v = lire_variables;
+     i = lire_instr; 'MC ";" >] ->
        (nom, {fonc_paramètres=p; fonc_type_résultat=ty;
               fonc_variables=v; fonc_corps=i});;
 
-let rec lire_proc_fonc = function
-  | [< lire_procédure proc; lire_proc_fonc (procs, foncs) >] ->
+let rec lire_proc_fonc = parser
+  | [< proc = lire_procédure; (procs, foncs) = lire_proc_fonc >] ->
       (proc::procs, foncs)
-  | [< lire_fonction fonc;  lire_proc_fonc (procs, foncs) >] ->
+  | [< fonc = lire_fonction;  (procs, foncs) = lire_proc_fonc >] ->
        (procs, fonc::foncs)
   | [< >] -> ([], []);;
 
-let lire_prog = function
+let lire_prog = parser
     [< 'MC "program"; 'Ident nom_du_programme; 'MC ";";
-       lire_variables v; lire_proc_fonc (p,f); lire_instr i >] ->
+       v = lire_variables; (p,f) = lire_proc_fonc; i = lire_instr >] ->
     { prog_variables=v; prog_procédures=p;
       prog_fonctions=f; prog_corps=i };;
 

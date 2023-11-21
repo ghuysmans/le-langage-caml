@@ -12,9 +12,9 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "envir";;
-#open "printf";;
+open Syntaxe;;
+open Envir;;
+open Printf;;
 
 let taille_du_mot = 4;;            (* un mot = quatre octets *)
 
@@ -49,11 +49,11 @@ let rec type_de env = function
       (cherche_fonction fonc env).fonc_type_résultat
   | Op_unaire(op, arg) ->
       let (type_arg, type_res) =
-        typage__type_op_unaire op
+        Typage.type_op_unaire op
       in type_res
   | Op_binaire(op, arg1, arg2) ->
       let (type_arg1, type_arg2, type_res) =
-        typage__type_op_binaire op
+        Typage.type_op_binaire op
       in type_res
   | Accès_tableau(arg1, arg2) ->
       match type_de env arg1 with
@@ -118,10 +118,10 @@ let rec compile_expr env expr reg =
                  (!profondeur_pile - n) reg nom
       end
   | Application(fonc, arguments) ->
-      let nbr_args = list_length arguments in
+      let nbr_args = List.length arguments in
       réserve_pile nbr_args;
       let position = ref 0 in
-      do_list (function arg ->
+      List.iter (function arg ->
                 compile_expr env arg 1;
                 printf "store sp, %d, r 1\n" !position;
                 position := !position + taille_du_mot)
@@ -228,10 +228,10 @@ let rec compile_instr env = function
          printf "store r %d, r %d, r %d\n" reg1 reg2 1
       | _ -> failwith "Erreur dans le contrôleur de types" end
   | Appel(proc, arguments) ->
-      let nbr_args = list_length arguments in
+      let nbr_args = List.length arguments in
       réserve_pile nbr_args;
       let position = ref 0 in
-      do_list (function arg ->
+      List.iter (function arg ->
                 compile_expr env arg 1;
                 printf "store sp, %d, r 1\n" !position;
                 position := !position + taille_du_mot)
@@ -277,7 +277,7 @@ let rec compile_instr env = function
       printf "read\n";
       affecte_var env nom_var 1
   | Bloc liste_instr ->
-      do_list (compile_instr env) liste_instr
+      List.iter (compile_instr env) liste_instr
 
 and affecte_var env nom reg =
   let var = cherche_variable nom env in
@@ -301,7 +301,7 @@ let alloue_variable_locale (nom, typ) env =
 let alloue_paramètres liste_des_paramètres environnement =
   let prof = ref 0 in
   let env = ref environnement in
-  do_list
+  List.iter
    (function (nom,typ) ->
       env := ajoute_variable nom
               {typ=typ;
@@ -316,7 +316,7 @@ let compile_procédure env (nom, décl) =
     alloue_paramètres décl.proc_paramètres env in
   profondeur_pile := taille_du_mot;
   let env2 =
-    list_it alloue_variable_locale décl.proc_variables env1 in
+    List.fold_right alloue_variable_locale décl.proc_variables env1 in
   printf "P%s:\n" nom;
   printf "sub sp, %d, sp\n" !profondeur_pile;
   printf "store sp, %d, ra\n" (!profondeur_pile - taille_du_mot);
@@ -330,7 +330,7 @@ let compile_fonction env (nom, décl) =
     alloue_paramètres décl.fonc_paramètres env in
   profondeur_pile := taille_du_mot;
   let env2 =
-    list_it alloue_variable_locale décl.fonc_variables env1 in
+    List.fold_right alloue_variable_locale décl.fonc_variables env1 in
   let env3 =
     alloue_variable_locale (nom, décl.fonc_type_résultat) env2 in
   printf "F%s:\n" nom;
@@ -354,10 +354,10 @@ let alloue_variable_globale (nom, typ) env =
 let compile_programme prog =
   adresse_donnée := 0;
   let env_global =
-    list_it alloue_variable_globale prog.prog_variables
+    List.fold_right alloue_variable_globale prog.prog_variables
             (environnement_initial prog.prog_procédures
                                    prog.prog_fonctions) in
   compile_instr env_global prog.prog_corps;
   printf "stop\n";
-  do_list (compile_procédure env_global) prog.prog_procédures;
-  do_list (compile_fonction env_global) prog.prog_fonctions;;
+  List.iter (compile_procédure env_global) prog.prog_procédures;
+  List.iter (compile_fonction env_global) prog.prog_fonctions;;

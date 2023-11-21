@@ -12,14 +12,14 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "valeur";;
-#open "envir";;
+open Syntaxe;;
+open Valeur;;
+open Envir;;
 
 let rec valeur_initiale = function
   | Integer | Boolean -> Inconnue
   | Array(inf, sup, ty) ->
-      let v = make_vect (sup - inf + 1) Inconnue in
+      let v = Array.create (sup - inf + 1) Inconnue in
       for i = inf to sup do
         v.(i - inf) <- valeur_initiale ty
       done;
@@ -28,13 +28,13 @@ let rec valeur_initiale = function
 let alloue_variable (nom_var, type_var) env =
   ajoute_variable nom_var (ref (valeur_initiale type_var)) env;;
 let alloue_variables décl_var env =
-  list_it alloue_variable décl_var env;;
+  List.fold_right alloue_variable décl_var env;;
 let rec ajoute_arguments paramètres arguments env =
   match (paramètres, arguments) with
   | [], [] -> env
-  | ((nom, typ) :: reste_p, val :: reste_a) ->
+  | ((nom, typ) :: reste_p, val0 :: reste_a) ->
       ajoute_arguments reste_p reste_a
-                       (ajoute_variable nom (ref val) env)
+                       (ajoute_variable nom (ref val0) env)
   | (_, _) ->
       raise(Erreur_exécution "mauvais nombre d'arguments");;
 let environnement_global =
@@ -48,12 +48,12 @@ let rec évalue_expr env = function
       !emplacement
   | Application(nom_fonc, arguments) ->
       let fonc = cherche_fonction nom_fonc env in
-      applique_fonc nom_fonc fonc (map (évalue_expr env) arguments)
+      applique_fonc nom_fonc fonc (List.map (évalue_expr env) arguments)
   | Op_unaire(op, argument) ->
       let v = évalue_expr env argument in
       begin match op with
       | "-"   -> Ent(- (ent_val v))
-      | "not" -> Bool(not (bool_val v))
+      | "not" -> Bool((not ((bool_val v))))
       | _ -> failwith "Opérateur unaire inconnu"
       end
   | Op_binaire(op, argument1, argument2) ->
@@ -80,7 +80,7 @@ let rec évalue_expr env = function
   | Accès_tableau(argument1, argument2) ->
       let (inf, tbl) = tableau_val(évalue_expr env argument1) in
       let indice = ent_val(évalue_expr env argument2) in
-      if indice >= inf & indice < inf + vect_length tbl
+      if indice >= inf & indice < inf + Array.length tbl
       then tbl.(indice - inf)
       else raise(Erreur_exécution "accès hors bornes")
 
@@ -92,12 +92,12 @@ and exécute_instr env = function
       let nouvelle_valeur = évalue_expr env expr3 in
       let (inf, tbl) = tableau_val(évalue_expr env expr1) in
       let indice = ent_val(évalue_expr env expr2) in
-      if indice >= inf & indice < inf + vect_length tbl
+      if indice >= inf & indice < inf + Array.length tbl
       then tbl.(indice - inf) <- nouvelle_valeur
       else raise(Erreur_exécution "accès hors bornes")
   | Appel(nom_proc, arguments) ->
       let proc = cherche_procédure nom_proc env in
-      appelle_proc proc (map (évalue_expr env) arguments)
+      appelle_proc proc (List.map (évalue_expr env) arguments)
   | If(condition, branche_oui, branche_non) ->
       if bool_val(évalue_expr env condition)
       then exécute_instr env branche_oui
@@ -112,7 +112,7 @@ and exécute_instr env = function
       let emplacement = cherche_variable nom env in
       emplacement := lire_valeur ()
   | Bloc instructions ->
-      do_list (exécute_instr env) instructions
+      List.iter (exécute_instr env) instructions
 
 and appelle_proc proc arguments =
   let env =

@@ -55,4 +55,4 @@ type programme =
     prog_fonctions: (string * décl_fonc) list;
     prog_corps: instruction };;
 
-value lire_programme : char stream -> programme;;
+val lire_programme : char Stream.t -> programme;;

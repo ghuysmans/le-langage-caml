@@ -12,5 +12,4 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value exécute_programme : syntaxe__programme -> unit;;
-exception Erreur_exécution of string;;
+val exécute_programme : Syntaxe.programme -> unit;;

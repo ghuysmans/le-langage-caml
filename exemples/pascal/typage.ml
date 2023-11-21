@@ -12,8 +12,17 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "envir";;
+open Syntaxe;;
+open Envir;;
+
+type erreur_de_type =
+    Indéfini of string      (* variable utilisée mais non définie *)
+  | Conflit of string * expr_type * expr_type (* conflit de types *)
+  | Arité of string * int * int     (* mauvais nombre d'arguments *)
+  | Tableau_attendu             (* [..] appliqué à un non-tableau *)
+  | Tableau_interdit of string;;   (* tableau renvoyé en résultat *)
+
+exception Erreur_typage of erreur_de_type;;
 
 let vérifie_type message type_attendu type_réel =
   if type_attendu <> type_réel then
@@ -55,14 +64,14 @@ let rec type_expr env = function
       type_éléments
 
 and type_application env nom paramètres arguments =
-  let nbr_paramètres = list_length paramètres
-  and nbr_arguments = list_length arguments in
+  let nbr_paramètres = List.length paramètres
+  and nbr_arguments = List.length arguments in
   if nbr_paramètres <> nbr_arguments then
     raise(Erreur_typage(Arité(nom, nbr_paramètres, nbr_arguments)));
   let type_paramètre (nom_param, type_param) argument =
     vérifie_type ("le paramètre " ^ nom_param ^ " de " ^ nom)
                  type_param (type_expr env argument) in
-  do_list2 type_paramètre paramètres arguments
+  List.iter2 type_paramètre paramètres arguments
 
 and type_op_unaire = function
   | "-" -> (Integer, Integer)
@@ -106,12 +115,12 @@ let rec type_instr env = function
       vérifie_type "l'argument de READ"
                    Integer (cherche_variable nom_var env)
   | Bloc liste ->
-      do_list (type_instr env) liste;;
+      List.iter (type_instr env) liste;;
 let ajoute_var (nom, typ) env = ajoute_variable nom typ env;;
 
 let type_procédure env_global (nom, décl) =
   let env =
-    list_it ajoute_var
+    List.fold_right ajoute_var
             (décl.proc_variables @ décl.proc_paramètres)
             env_global in
   type_instr env décl.proc_corps;;
@@ -121,19 +130,19 @@ let type_fonction env_global (nom, décl) =
     ("passage comme résultat de la fonction " ^ nom)
     décl.fonc_type_résultat;
   let env =
-    list_it ajoute_var
+    List.fold_right ajoute_var
             ((nom, décl.fonc_type_résultat) ::
               décl.fonc_variables @ décl.fonc_paramètres)
             env_global in
   type_instr env décl.fonc_corps;;
 let type_programme prog =
   let env_global =
-    list_it ajoute_var prog.prog_variables
+    List.fold_right ajoute_var prog.prog_variables
             (environnement_initial prog.prog_procédures
                                    prog.prog_fonctions) in
   try
-    do_list (type_procédure env_global) prog.prog_procédures;
-    do_list (type_fonction env_global) prog.prog_fonctions;
+    List.iter (type_procédure env_global) prog.prog_procédures;
+    List.iter (type_fonction env_global) prog.prog_fonctions;
     type_instr env_global prog.prog_corps
   with Pas_trouvé nom ->
     raise(Erreur_typage(Indéfini nom));;

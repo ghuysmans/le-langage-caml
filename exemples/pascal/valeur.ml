@@ -12,7 +12,14 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "interp";;
+type valeur =
+    Inconnue
+  | Ent of int
+  | Bool of bool
+  | Tableau of int * valeur array;;
+
+exception Erreur_exécution of string;;
+
 let ent_val = function
   | Ent n -> n
   | _ -> raise(Erreur_exécution "entier attendu")

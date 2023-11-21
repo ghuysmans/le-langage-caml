@@ -12,4 +12,4 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value compile_programme: syntaxe__programme -> unit;;
+val compile_programme: Syntaxe.programme -> unit;;
