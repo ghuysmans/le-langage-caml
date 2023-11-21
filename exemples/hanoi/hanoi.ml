@@ -12,16 +12,16 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-let blancs n = make_string n ` `;;
+let blancs n = String.make n ' ';;
 let disque taille =
-    let moitié_droite = make_string taille `>`
-    and moitié_gauche = make_string taille `<`
+    let moitié_droite = String.make taille '>'
+    and moitié_gauche = String.make taille '<'
     in moitié_gauche ^ "|" ^ moitié_droite;;
 let disque_numéro n taille_grand_disque =
     let partie_blanche = blancs (taille_grand_disque + 1 - n) in
     partie_blanche ^ (disque n) ^ partie_blanche;;
 let base_de_tige taille_grand_disque =
-    let moitié = make_string taille_grand_disque `_` in
+    let moitié = String.make taille_grand_disque '_' in
     " " ^ moitié ^ "|" ^ moitié ^ " ";;
 let rec tige taille_grand_disque = function
   | (0, []) -> []
@@ -42,7 +42,7 @@ let imprime_jeu nombre_de_disques départ milieu arrivée =
         recolle (tige nombre_de_disques départ)
                 (tige nombre_de_disques milieu)
                 (tige nombre_de_disques arrivée) in
-    do_list imprime dessin;
+    List.iter imprime dessin;
     let b = base_de_tige nombre_de_disques in imprime (b ^ b ^ b);;
 let ajoute_disque disque (décalage, disques as tige) =
     (décalage - 1, disque::disques);;
@@ -82,7 +82,7 @@ let jeu nombre_de_disques =
     imprime_jeu nombre_de_disques !gauche !milieu !droite;
     hanoi nombre_de_disques
           ("A", gauche) ("B", milieu) ("C", droite);;
-if sys__interactive then () else begin
-  jeu (int_of_string (sys__command_line.(1)));
+if !Sys.interactive then () else begin
+  jeu (int_of_string (Sys.argv.(1)));
   exit 0
 end;;
