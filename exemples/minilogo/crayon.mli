@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value vide_écran: unit -> unit
-  and fixe_crayon: bool -> unit
-  and tourne: float -> unit
-  and avance: float -> unit;;
+val vide_écran: unit -> unit
+  val fixe_crayon: bool -> unit
+  val tourne: float -> unit
+  val avance: float -> unit;;

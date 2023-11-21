@@ -31,11 +31,11 @@ type ordre =
    | Stop
    | Si of expression * expression * ordre list * ordre list
    | Exécute of string * expression list;;
-type procédure = {Paramètres : string list; Corps : ordre list};;
+type procédure = {paramètres : string list; corps : ordre list};;
 type phrase_logo =
-     Pour of string * procédure
+     Pour of (string * procédure)
    | Ordre of ordre;;
 type programme_logo = Programme of phrase_logo list;;
 
-value exécute_phrase: phrase_logo -> unit
-  and exécute_programme: programme_logo -> unit;;
+val exécute_phrase: phrase_logo -> unit
+  val exécute_programme: programme_logo -> unit;;

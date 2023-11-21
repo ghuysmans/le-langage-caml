@@ -12,28 +12,28 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "graphics";;
-#open "langage";;
-#open "alex";;
-#open "asynt";;
+open Graphics;;
+open Langage;;
+open Alex;;
+open Asynt;;
 
 let boucle() =
-  let flux_d'entrée = stream_of_channel std_in in
+  let flux_d'entrée = Caml__csl.stream_of_channel stdin in
   let flux_lexèmes = analyseur_lexical flux_d'entrée in
   try
-    crayon__vide_écran();
+    Crayon.vide_écran();
     while true do
-      print_string "? "; flush std_out;
+      print_string "? "; flush stdout;
       try
         exécute_programme(analyse_programme flux_lexèmes)
       with
-      | Parse_error ->
+      | Stream.Error "" ->
           print_string "Erreur de syntaxe"; print_newline ()
       | Failure s ->
           print_string "Erreur à l'exécution: "; print_string s;
           print_newline()
     done
-  with Parse_failure -> ()
+  with Stream.Failure -> ()
 ;;
 
-if not sys__interactive then begin boucle(); close_graph(); exit 0 end;;
+if (not (Caml__csl.interactive)) then begin boucle(); close_graph(); exit 0 end;;

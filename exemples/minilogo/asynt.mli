@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value analyse_phrase:
-      alex__lexème stream -> langage__phrase_logo
-  and analyse_programme:
-      alex__lexème stream -> langage__programme_logo;;
+val analyse_phrase:
+      Alex.lexème Stream.t -> Langage.phrase_logo
+  val analyse_programme:
+      Alex.lexème Stream.t -> Langage.programme_logo;;
