@@ -12,8 +12,12 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "types";;
+open Syntaxe;;
+open Types;;
+
+type environnement = (string * schéma_de_types) list;;
+
+exception Erreur of string;;
 
 let rec type_motif env = function
   | Motif_variable id ->
@@ -36,7 +40,7 @@ let rec type_motif env = function
       (ty2, env2);;
 let rec type_exp env = function
   | Variable id ->
-      begin try spécialisation (assoc id env)
+      begin try spécialisation (List.assoc id env)
       with Not_found -> raise(Erreur(id ^ " est inconnu"))
       end
   | Fonction liste_de_cas ->
@@ -47,7 +51,7 @@ let rec type_exp env = function
         unifie type_motif type_argument;
         let type_expr = type_exp env_étendu expr in
         unifie type_expr type_résultat in
-      do_list type_cas liste_de_cas;
+      List.iter type_cas liste_de_cas;
       type_flèche type_argument type_résultat
   | Application(fonction, argument) ->
       let type_fonction = type_exp env fonction in
@@ -69,14 +73,14 @@ let rec type_exp env = function
 and type_déf env déf =
   début_de_définition();
   let type_expr =
-    match déf.Récursive with
-    | false -> type_exp env déf.Expr
+    match déf.récursive with
+    | false -> type_exp env déf.expr
     | true ->
         let type_provisoire = nouvelle_inconnue() in
         let type_expr =
-          type_exp ((déf.Nom, schéma_trivial type_provisoire) :: env)
-                   déf.Expr in
+          type_exp ((déf.nom, schéma_trivial type_provisoire) :: env)
+                   déf.expr in
         unifie type_expr type_provisoire;
         type_expr in
   fin_de_définition();
-  (déf.Nom, généralisation type_expr) :: env;;
+  (déf.nom, généralisation type_expr) :: env;;

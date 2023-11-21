@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
+open Syntaxe;;
 type valeur =
      Val_nombre of int
    | Val_booléenne of bool
@@ -20,16 +20,16 @@ type valeur =
    | Val_nil
    | Val_cons of valeur * valeur
    | Val_fermeture of fermeture
-   | Val_primitive of valeur -> valeur
+   | Val_primitive of (valeur -> valeur)
 
 and fermeture =
-  { Définition: (motif * expression) list;
-    mutable Environnement: environnement }
+  { définition: (motif * expression) list;
+    mutable environnement: environnement }
 
-and environnement == (string * valeur) list;;
+and environnement = (string * valeur) list;;
 
-value évalue: environnement -> expression -> valeur
-  and évalue_définition: environnement -> définition -> environnement
-  and imprime_valeur: valeur -> unit;;
+val évalue: environnement -> expression -> valeur
+  val évalue_définition: environnement -> définition -> environnement
+  val imprime_valeur: valeur -> unit;;
 
 exception Erreur of string;;

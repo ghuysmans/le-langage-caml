@@ -1,0 +1,5 @@
+(executable
+ (name caml)
+ (libraries csl)
+ (flags (:standard -w -3-8-9-27 -unsafe-string))
+ (preprocess (action (run %{bin:camlp4o} %{input-file}))))

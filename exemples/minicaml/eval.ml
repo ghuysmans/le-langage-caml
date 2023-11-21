@@ -12,13 +12,30 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
+open Syntaxe;;
+
+type valeur =
+     Val_nombre of int
+   | Val_booléenne of bool
+   | Val_paire of valeur * valeur
+   | Val_nil
+   | Val_cons of valeur * valeur
+   | Val_fermeture of fermeture
+   | Val_primitive of (valeur -> valeur)
+
+and fermeture =
+  { définition: (motif * expression) list;
+    mutable environnement: environnement }
+
+and environnement = (string * valeur) list;;
 
 exception Échec_filtrage;;
 
+exception Erreur of string;;
+
 let rec filtrage valeur motif =
   match (valeur, motif) with
-  | (val, Motif_variable id) -> [id, val]
+  | (val0, Motif_variable id) -> [id, val0]
   | (Val_booléenne b1, Motif_booléen b2) ->
       if b1 = b2 then [] else raise Échec_filtrage
   | (Val_nombre i1, Motif_nombre i2) ->
@@ -33,11 +50,11 @@ let rec évalue env expr =
   match expr with
   | Variable id ->
       begin try
-        assoc id env
+        List.assoc id env
       with Not_found -> raise(Erreur(id ^ " est inconnu"))
       end
   | Fonction(liste_de_cas) ->
-      Val_fermeture {Définition = liste_de_cas; Environnement = env}
+      Val_fermeture {définition = liste_de_cas; environnement = env}
   | Application(fonction, argument) ->
       let val_fonction = évalue env fonction in
       let val_argument = évalue env argument in
@@ -45,8 +62,8 @@ let rec évalue env expr =
       | Val_primitive fonction_primitive ->
           fonction_primitive val_argument
       | Val_fermeture fermeture ->
-          évalue_application fermeture.Environnement
-                             fermeture.Définition val_argument
+          évalue_application fermeture.environnement
+                             fermeture.définition val_argument
       | _ ->
           raise(Erreur "application d'une valeur non fonctionnelle")
       end
@@ -69,16 +86,16 @@ and évalue_application env liste_de_cas argument =
         évalue_application env autres_cas argument
 
 and évalue_définition env_courant déf =
-  match déf.Récursive with
-  | false -> (déf.Nom, évalue env_courant déf.Expr) :: env_courant
+  match déf.récursive with
+  | false -> (déf.nom, évalue env_courant déf.expr) :: env_courant
   | true ->
-      match déf.Expr with
+      match déf.expr with
       | Fonction liste_de_cas ->
           let fermeture =
-            { Définition = liste_de_cas; Environnement = [] } in
+            { définition = liste_de_cas; environnement = [] } in
           let env_étendu =
-            (déf.Nom, Val_fermeture fermeture) :: env_courant in
-          fermeture.Environnement <- env_étendu;
+            (déf.nom, Val_fermeture fermeture) :: env_courant in
+          fermeture.environnement <- env_étendu;
           env_étendu
       | _ -> raise(Erreur "let rec non fonctionnel");;
 let rec imprime_valeur = function

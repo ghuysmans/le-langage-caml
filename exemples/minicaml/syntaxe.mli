@@ -32,11 +32,11 @@ and motif =
   | Motif_cons of motif * motif
 
 and définition =
-  { Récursive: bool;
-    Nom: string;
-    Expr: expression };;
+  { récursive: bool;
+    nom: string;
+    expr: expression };;
 type phrase =
     Expression of expression
   | Définition of définition;;
 
-value lire_phrase: char stream -> phrase;;
+val lire_phrase: char Stream.t -> phrase;;

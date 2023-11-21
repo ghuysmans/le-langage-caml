@@ -12,12 +12,12 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "types";;
+open Syntaxe;;
+open Types;;
 
-type environnement == (string * schéma_de_types) list;;
+type environnement = (string * schéma_de_types) list;;
 
-value type_exp: environnement -> expression -> type_simple
-  and type_déf: environnement -> définition -> environnement;;
+val type_exp: environnement -> expression -> type_simple
+  val type_déf: environnement -> définition -> environnement;;
 
 exception Erreur of string;;

@@ -12,9 +12,9 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "syntaxe";;
-#open "types";;
-#open "synthese";;
+open Syntaxe;;
+open Types;;
+open Synthese;;
 
 let type_arithmétique = schéma_trivial
   (type_flèche (type_produit type_int type_int) type_int)
@@ -33,9 +33,9 @@ let env_initial =
 
 let boucle () =
   let env_global = ref env_initial in
-  let flux_d'entrée = stream_of_channel std_in in
+  let flux_d'entrée = Caml__csl.stream_of_channel stdin in
   while true do
-    print_string "# "; flush std_out;
+    print_string "# "; flush stdout;
     try
       match lire_phrase flux_d'entrée with
       | Expression expr ->
@@ -52,7 +52,7 @@ let boucle () =
           end;
           env_global := nouvel_env
     with
-      Parse_error | Parse_failure ->
+      Stream.Error "" ->
         print_string "Erreur de syntaxe"; print_newline()
     | Conflit(ty1, ty2) ->
         print_string "Incompatibilité de types entre ";
@@ -65,6 +65,8 @@ let boucle () =
     | Erreur msg ->
         print_string "Erreur de typage: "; print_string msg;
         print_newline()
+    | Stream.Failure ->
+        exit 0
   done;;
 
-if sys__interactive then () else boucle();;
+if Caml__csl.interactive then () else boucle();;
