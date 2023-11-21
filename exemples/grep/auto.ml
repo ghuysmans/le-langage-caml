@@ -12,7 +12,13 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-#open "expr";;
+open Expr;;
+
+type état =
+  { mutable transitions : (char * état) list;
+    mutable epsilon_transitions : état list;
+    mutable terminal : bool;
+    numéro : int };;
 
 let compteur_d'états = ref 0;;
 
@@ -38,7 +44,7 @@ let rec thompson = function
       {initial = e1; final = e2}
   | Caractères cl ->
       let e1 = nouvel_état() and e2 = nouvel_état() in
-      do_list (function c -> ajoute_trans e1 c e2) cl;
+      List.iter (function c -> ajoute_trans e1 c e2) cl;
       {initial = e1; final = e2}
   | Alternative(r1, r2) ->
       let t1 = thompson r1 and t2 = thompson r2 in

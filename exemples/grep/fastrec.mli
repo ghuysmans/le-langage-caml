@@ -12,5 +12,5 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-value reconnaît : determ__état -> string -> bool = 2 "reconnait";;
+external reconnaît : Determ.état -> string -> bool =  "reconnait";;
 

@@ -1,0 +1,7 @@
+;TODO build fastgrep
+(executable
+ (name grep)
+ (libraries csl)
+ (flags (:standard -w -3))
+ (preprocess (action (run %{bin:camlp4o} %{input-file})))
+ (modules_without_implementation fastrec))

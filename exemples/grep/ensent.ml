@@ -12,7 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
-type t == int list;;
+type t = int list;;
 let vide = [];;
 let rec appartient n = function
   | [] -> false

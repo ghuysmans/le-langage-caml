@@ -13,11 +13,11 @@
 (*                                                                     *)
 (***********************************************************************)
 type état =
-  { mutable dtransitions : transition vect;
+  { mutable dtransitions : transition array;
     dterminal : bool }
 and transition =
     Vers of état
   | Rejet;;
 
-value déterminise : auto__état -> determ__état
-  and reconnaît : determ__état -> string -> bool;;
+val déterminise : Auto.état -> état
+  val reconnaît : état -> string -> bool;;
