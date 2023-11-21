@@ -12,6 +12,7 @@
 (*  Distributed under the BSD license.                                 *)
 (*                                                                     *)
 (***********************************************************************)
+open Compiler;;
 open Syntaxe;;
 
 let compile_fichier nom =

@@ -1,5 +1,4 @@
-(executable
- (name ipascal)
- (libraries csl)
- (preprocess (action (run camlp4o %{input-file}))) ;for stream parsers
+(executables
+ (names cpascal ipascal)
+ (libraries csl compiler)
  (flags (:standard -w -3-8-26-27-39 -unsafe-string)))
