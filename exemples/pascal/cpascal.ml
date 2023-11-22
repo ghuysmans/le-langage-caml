@@ -13,17 +13,16 @@
 (*                                                                     *)
 (***********************************************************************)
 open Compiler;;
-open Syntaxe;;
 
 let compile_fichier nom =
   try
     let canal = open_in nom in
     try
-      let prog = lire_programme (Caml__csl.stream_of_channel canal) in
+      let prog = Parser.prog Lexer.tokenize (Lexing.from_channel canal) in
       close_in canal;
       Typage.type_programme prog;
       Compil.compile_programme prog
-    with (Stream.Error "") | Stream.Failure ->
+    with Parsing.Parse_error ->
            prerr_string "Erreur de syntaxe aux alentours \
                          du caractère numéro ";
            prerr_int (pos_in canal);

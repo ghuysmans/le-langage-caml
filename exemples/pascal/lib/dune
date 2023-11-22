@@ -1,5 +1,6 @@
+(ocamllex (modules lexer))
+(menhir (modules parser))
 (library
  (name compiler)
  (libraries csl)
- (preprocess (action (run camlp4o %{input-file}))) ;for stream parsers
- (flags (:standard -w -3-8-26-27-39 -unsafe-string)))
+ (flags (:standard -w -3-27)))

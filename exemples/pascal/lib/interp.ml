@@ -52,30 +52,28 @@ let rec évalue_expr env = function
   | Op_unaire(op, argument) ->
       let v = évalue_expr env argument in
       begin match op with
-      | "-"   -> Ent(- (ent_val v))
-      | "not" -> Bool((not ((bool_val v))))
-      | _ -> failwith "Opérateur unaire inconnu"
+      | Moins   -> Ent(- (ent_val v))
+      | Not -> Bool((not ((bool_val v))))
       end
   | Op_binaire(op, argument1, argument2) ->
       let v1 = évalue_expr env argument1 in
       let v2 = évalue_expr env argument2 in
       begin match op with
-      | "*"   -> Ent(ent_val v1 * ent_val v2)
-      | "/"   -> let n2 = ent_val v2 in
+      | Fois  -> Ent(ent_val v1 * ent_val v2)
+      | Div   -> let n2 = ent_val v2 in
                  if n2 = 0
                  then raise(Erreur_exécution "division par zéro")
                  else Ent(ent_val v1 / n2)
-      | "+"   -> Ent(ent_val v1 + ent_val v2)
-      | "-"   -> Ent(ent_val v1 - ent_val v2)
-      | "="   -> Bool(v1 = v2)
-      | "<>"  -> Bool(v1 <> v2)
-      | "<"   -> Bool(ent_val v1 < ent_val v2)
-      | ">"   -> Bool(ent_val v1 > ent_val v2)
-      | "<="  -> Bool(ent_val v1 <= ent_val v2)
-      | ">="  -> Bool(ent_val v1 >= ent_val v2)
-      | "and" -> Bool(bool_val v1 & bool_val v2)
-      | "or"  -> Bool(bool_val v1 or bool_val v2)
-      | _ -> failwith "Opérateur binaire inconnu"
+      | Plus  -> Ent(ent_val v1 + ent_val v2)
+      | Moins -> Ent(ent_val v1 - ent_val v2)
+      | Egal  -> Bool(v1 = v2)
+      | Diff  -> Bool(v1 <> v2)
+      | Pp    -> Bool(ent_val v1 < ent_val v2)
+      | Pg    -> Bool(ent_val v1 > ent_val v2)
+      | Ppe   -> Bool(ent_val v1 <= ent_val v2)
+      | Pge   -> Bool(ent_val v1 >= ent_val v2)
+      | And   -> Bool(bool_val v1 & bool_val v2)
+      | Or    -> Bool(bool_val v1 or bool_val v2)
       end
   | Accès_tableau(argument1, argument2) ->
       let (inf, tbl) = tableau_val(évalue_expr env argument1) in

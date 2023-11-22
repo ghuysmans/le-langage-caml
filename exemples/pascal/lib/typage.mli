@@ -25,5 +25,5 @@ exception Erreur_typage of erreur_de_type;;
 
 val type_programme: programme -> unit
   val affiche_erreur: erreur_de_type -> unit
-  val type_op_unaire: string -> expr_type * expr_type
-  val type_op_binaire: string -> expr_type * expr_type * expr_type;;
+  val type_op_unaire: op_unaire -> expr_type * expr_type
+  val type_op_binaire: op_binaire -> expr_type * expr_type * expr_type;;

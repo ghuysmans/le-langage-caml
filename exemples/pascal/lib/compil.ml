@@ -91,13 +91,12 @@ and besoins_op_binaire env arg1 arg2 =
   then max b2 (b1 + 1)
   else max b1 (b2 + 1);;
 let instr_pour_op = function
-  | "+"   -> "add"     | "-"   -> "sub"
-  | "*"   -> "mult"    | "/"   -> "div"
-  | "="   -> "seq"     | "<>"  -> "sne"
-  | "<"   -> "slt"     | ">"   -> "sgt"
-  | "<="  -> "sle"     | ">="  -> "sge"
-  | "and" -> "and"     | "or"  -> "or"
-  | _ -> failwith "opérateur inconnu";;
+  | Plus  -> "add"     | Moins -> "sub"
+  | Fois  -> "mult"    | Div   -> "div"
+  | Egal  -> "seq"     | Diff  -> "sne"
+  | Pp    -> "slt"     | Pg    -> "sgt"
+  | Ppe   -> "sle"     | Pge   -> "sge"
+  | And   -> "and"     | Or    -> "or"
 
 let rec compile_expr env expr reg =
   match expr with
@@ -132,16 +131,14 @@ let rec compile_expr env expr reg =
   | Op_unaire(op, arg) ->
       compile_expr env arg reg;
       begin match op with
-      | "-"   -> printf "sub r 0, r %d, r %d\n" reg reg
-      | "not" -> printf "seq r 0, r %d, r %d\n"  reg reg
-      | _ -> failwith "opérateur uniaire inconnu"
+      | Moins -> printf "sub r 0, r %d, r %d\n" reg reg
+      | Not   -> printf "seq r 0, r %d, r %d\n"  reg reg
       end
   | Op_binaire(op, arg1, Constante cst2) ->
       compile_expr env arg1 reg;
       printf "%s r %d, %d, r %d\n"
              (instr_pour_op op) reg (val_const cst2) reg
-  | Op_binaire(("+" | "*" | "=" | "<>" | "and" | "or") as op,
-               Constante cst1, arg2) ->
+  | Op_binaire(op, Constante cst1, arg2) ->
       compile_expr env arg2 reg;
       printf "%s r %d, %d, r %d\n"
              (instr_pour_op op) reg (val_const cst1) reg
@@ -250,7 +247,7 @@ let rec compile_instr env = function
       printf "branz r 1, L%d\n" étiq_fin;
       compile_instr env branche_non;
       printf "L%d:\n" étiq_fin
-  | If(Op_unaire("not", condition), branche_oui, branche_non) ->
+  | If(Op_unaire(Not, condition), branche_oui, branche_non) ->
       compile_instr env (If(condition, branche_non, branche_oui))
   | If(condition, branche_oui, branche_non) ->
       let étiq_non = nouvelle_étiq() and étiq_fin = nouvelle_étiq() in

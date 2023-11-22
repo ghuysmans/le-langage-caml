@@ -47,14 +47,14 @@ let rec type_expr env = function
       fonc.fonc_type_résultat
   | Op_unaire(op, arg) ->
       let (type_arg, type_res) = type_op_unaire op in
-      vérifie_type ("l'argument de " ^ op)
+      vérifie_type ("l'argument de " ^ string_op_unaire op)
                    type_arg (type_expr env arg);
       type_res
   | Op_binaire(op, arg1, arg2) ->
       let (type_arg1, type_arg2, type_res) = type_op_binaire op in
-      vérifie_type ("le premier argument de " ^ op)
+      vérifie_type ("le premier argument de " ^ string_op_binaire op)
                    type_arg1 (type_expr env arg1);
-      vérifie_type ("le deuxième argument de " ^ op)
+      vérifie_type ("le deuxième argument de " ^ string_op_binaire op)
                    type_arg2 (type_expr env arg2);
       type_res
   | Accès_tableau(expr1, expr2) ->
@@ -74,15 +74,13 @@ and type_application env nom paramètres arguments =
   List.iter2 type_paramètre paramètres arguments
 
 and type_op_unaire = function
-  | "-" -> (Integer, Integer)
-  | "not" -> (Boolean, Boolean)
-  | _ -> failwith "opérateur unaire inconnu"
+  | Moins -> (Integer, Integer)
+  | Not -> (Boolean, Boolean)
 
 and type_op_binaire = function
-  | "*" | "/" | "+" | "-" -> (Integer,Integer,Integer)
-  | "=" | "<>" | "<" | ">" | "<=" | ">=" -> (Integer,Integer,Boolean)
-  | "and" | "or" -> (Boolean,Boolean,Boolean)
-  | _ -> failwith "opérateur binaire inconnu";;
+  | Fois | Div | Plus | Moins -> (Integer,Integer,Integer)
+  | Egal | Diff | Pp | Pg | Ppe | Pge -> (Integer,Integer,Boolean)
+  | And | Or -> (Boolean,Boolean,Boolean)
 let rec type_instr env = function
   | Affectation_var(nom_var, expr) ->
       let type_var = cherche_variable nom_var env in

@@ -1,4 +1,4 @@
 (executables
  (names cpascal ipascal)
  (libraries csl compiler)
- (flags (:standard -w -3-8-26-27-39 -unsafe-string)))
+ (flags (:standard -w -3)))
