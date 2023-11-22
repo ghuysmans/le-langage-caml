@@ -107,5 +107,5 @@ proc_fonc:
 | { [], [] }
 
 prog:
-| PROGRAM nom_du_programme=IDENT PV v=variables pf=proc_fonc i=instr
+| PROGRAM nom_du_programme=IDENT PV v=variables pf=proc_fonc i=instr EOF
   { Syntaxe.{prog_variables=v; prog_procédures=fst pf; prog_fonctions=snd pf; prog_corps=i} }
